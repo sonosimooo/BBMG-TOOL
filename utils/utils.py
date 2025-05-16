@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 # import from options
 from utils.options import op1, op2, op3, op4, op5, op6, op7, op8, op9, op10, op11, op13, op14, op15, op16, op17, op18
 
-versione = '1.0.0'
+versione = '1.0.1'
 
 username = os.getlogin()
 
