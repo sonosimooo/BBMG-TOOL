@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 # import from utils
-from utils.utils import clear, get_current_time, username, color, check_for_updates, versione
+from utils.utils import clear, get_current_time, username, color, check_for_updates, update_repository, versione
 from utils.titles import title_1page, title_2page, title_update
 
 # import from functions
@@ -43,13 +43,59 @@ def check_update():
         print(f"{getattr(Fore, color)}[{get_current_time()}] [!] Update available!{Style.RESET_ALL}")
         print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Current version: {Fore.WHITE}v{versione}{getattr(Fore, color)}{Style.RESET_ALL}")
         print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Latest version: {Fore.WHITE}v{latest_version}{getattr(Fore, color)}{Style.RESET_ALL}")
-        print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Please update to the latest version for new features and bug fixes.{Style.RESET_ALL}")
-        print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Download the latest version from: {Fore.WHITE}https://github.com/SimoTools/SimoTools/releases/latest{getattr(Fore, color)}{Style.RESET_ALL}")
+        print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Attempting to update automatically using Git...{Style.RESET_ALL}")
         
-        print(f"\n{getattr(Fore, color)}[{get_current_time()}] [*] Press Enter to continue with current version or 'U' to exit...{Style.RESET_ALL}")
-        user_input = input()
+        # Try to update using Git
+        success, message = update_repository()
         
-        if user_input.upper() == 'U':
+        if success:
+            print(f"{getattr(Fore, color)}[{get_current_time()}] [+] {message}{Style.RESET_ALL}")
+            print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Please restart the application to use the updated version.{Style.RESET_ALL}")
+            print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Press any key to exit...{Style.RESET_ALL}")
+            input()
+            sys.exit()
+        else:
+            print(f"{getattr(Fore, color)}[{get_current_time()}] [!] {message}{Style.RESET_ALL}")
+            
+            # Check if the error is related to local changes
+            if "local changes" in message.lower() or "would be overwritten by merge" in message.lower():
+                print(f"{getattr(Fore, color)}[{get_current_time()}] [*] You have local changes that would be lost during update.{Style.RESET_ALL}")
+                print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Options:{Style.RESET_ALL}")
+                print(f"{getattr(Fore, color)}[{get_current_time()}] [1] Force update (your changes will be lost){Style.RESET_ALL}")
+                print(f"{getattr(Fore, color)}[{get_current_time()}] [2] Exit and update manually{Style.RESET_ALL}")
+                
+                choice = input(f"{getattr(Fore, color)}[{get_current_time()}] Choose an option (1/2): {Style.RESET_ALL}")
+                
+                if choice == "1":
+                    print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Forcing update...{Style.RESET_ALL}")
+                    
+                    # Force update by resetting and pulling
+                    try:
+                        import subprocess
+                        # Reset to HEAD
+                        subprocess.run(['git', 'reset', '--hard', 'HEAD'], 
+                                     check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        # Pull latest changes
+                        subprocess.run(['git', 'pull'], 
+                                     check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        
+                        print(f"{getattr(Fore, color)}[{get_current_time()}] [+] Repository successfully updated to the latest version.{Style.RESET_ALL}")
+                        print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Please restart the application to use the updated version.{Style.RESET_ALL}")
+                    except Exception as e:
+                        print(f"{getattr(Fore, color)}[{get_current_time()}] [!] Failed to force update: {str(e)}{Style.RESET_ALL}")
+                        print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Please update manually from: {Fore.WHITE}https://github.com/sonosimooo/BBMG-TOOL/releases/latest{getattr(Fore, color)}{Style.RESET_ALL}")
+                    
+                    print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Press any key to exit...{Style.RESET_ALL}")
+                    input()
+                    sys.exit()
+                else:
+                    print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Please update manually from: {Fore.WHITE}https://github.com/sonosimooo/BBMG-TOOL/releases/latest{getattr(Fore, color)}{Style.RESET_ALL}")
+            else:
+                print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Please update manually from: {Fore.WHITE}https://github.com/sonosimooo/BBMG-TOOL/releases/latest{getattr(Fore, color)}{Style.RESET_ALL}")
+            
+            print(f"{getattr(Fore, color)}[{get_current_time()}] [!] Update is required to continue.{Style.RESET_ALL}")
+            print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Press any key to exit...{Style.RESET_ALL}")
+            input()
             sys.exit()
     else:
         print(f"{getattr(Fore, color)}[{get_current_time()}] [+] You are using the latest version: {Fore.WHITE}v{versione}{getattr(Fore, color)}{Style.RESET_ALL}")
