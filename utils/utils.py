@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 # import from options
 from utils.options import op1, op2, op3, op4, op5, op6, op7, op8, op9, op10, op11, op13, op14, op15, op16, op17, op18
 
-versione = '1.0.1'
+versione = '1.0.2'
 
 username = os.getlogin()
 
@@ -52,7 +52,7 @@ def check_for_updates():
     and latest_version is the latest version string.
     """
     try:
-        # GitHub repository info (replace with your actual repository)
+        # GitHub repository info
         repo_owner = "sonosimooo"
         repo_name = "BBMG-TOOL"
         
@@ -87,5 +87,83 @@ def check_for_updates():
     except Exception as e:
         print(f"{getattr(Fore, color)}[{get_current_time()}] [!] Error checking for updates: {str(e)}{Style.RESET_ALL}")
         return False, versione
+
+# UPDATE REPOSITORY USING GIT
+def update_repository():
+    """
+    Updates the repository using Git to the latest version.
+    Returns a tuple (success, message) where success is a boolean
+    and message is a string with information about the update.
+    """
+    try:
+        import subprocess
+        
+        # Check if git is installed
+        try:
+            subprocess.run(['git', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except (subprocess.SubprocessError, FileNotFoundError):
+            return False, "Git is not installed on this system. Please install Git to enable automatic updates."
+        
+        # Check if the current directory is a git repository
+        try:
+            subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], 
+                          check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except subprocess.SubprocessError:
+            return False, "The current directory is not a Git repository. Cannot perform automatic update."
+        
+        # Fetch the latest changes
+        fetch_process = subprocess.run(['git', 'fetch'], 
+                                     check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Check if there are changes to pull
+        status_process = subprocess.run(['git', 'status', '-uno'], 
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        status_output = status_process.stdout.decode('utf-8')
+        
+        if "Your branch is up to date" in status_output:
+            return True, "Repository is already up to date."
+        
+        # Check for local changes
+        diff_process = subprocess.run(['git', 'diff', '--name-only'], 
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        diff_output = diff_process.stdout.decode('utf-8').strip()
+        
+        # If there are local changes, try to stash them
+        if diff_output:
+            print(f"{getattr(Fore, color)}[{get_current_time()}] [*] Local changes detected. Attempting to stash them...{Style.RESET_ALL}")
+            stash_process = subprocess.run(['git', 'stash'], 
+                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            if stash_process.returncode != 0:
+                stash_error = stash_process.stderr.decode('utf-8')
+                return False, f"Failed to stash local changes: {stash_error}"
+        
+        # Pull the latest changes
+        pull_process = subprocess.run(['git', 'pull'], 
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        if pull_process.returncode != 0:
+            error_message = pull_process.stderr.decode('utf-8')
+            
+            # If stashing was done, try to pop the stash
+            if diff_output:
+                subprocess.run(['git', 'stash', 'pop'], 
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+            return False, f"Failed to update repository: {error_message}"
+        
+        # If stashing was done, try to pop the stash
+        if diff_output:
+            pop_process = subprocess.run(['git', 'stash', 'pop'], 
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            if pop_process.returncode != 0:
+                pop_error = pop_process.stderr.decode('utf-8')
+                return True, f"Repository updated, but failed to restore local changes: {pop_error}"
+        
+        return True, "Repository successfully updated to the latest version."
+        
+    except Exception as e:
+        return False, f"Error updating repository: {str(e)}"
 
 

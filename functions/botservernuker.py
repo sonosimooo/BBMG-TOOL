@@ -61,7 +61,7 @@ def botservernuker():
         # Bot events and commands
         @bot.event
         async def on_ready():
-            await bot.change_presence(activity=discord.Game(name=f"SimoTools"))
+            await bot.change_presence(activity=discord.Game(name=f"BBMG_TOOLS"))
             print(f"""
  {getattr(Fore, color)}[>]{Style.RESET_ALL} Token  : {Fore.WHITE}{token}{Style.RESET_ALL}
  {getattr(Fore, color)}[>]{Style.RESET_ALL} Invite : {Fore.WHITE}https://discord.com/oauth2/authorize?client_id={bot.user.id}&scope=bot&permissions=8{Style.RESET_ALL}
